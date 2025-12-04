@@ -4,4 +4,7 @@
 "dev": "vite",
 "preview": "vite preview"
 }
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
 }
