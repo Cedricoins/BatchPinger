@@ -1,6 +1,6 @@
 // Fichiers Vercel pour déploiement
 // vercel.json
-/*
+
 {
 "version": 2,
 "builds": [
@@ -10,4 +10,4 @@
 { "src": "(.*)", "dest": "/index.html" }
 ]
 }
-*/
+
