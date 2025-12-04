@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserProvider, Contract, parseEther, formatEther } from "ethers";
 
-// Remplace par ton contrat déployé
+// Remplace par l'adresse de ton contrat déployé
 const CONTRACT_ADDRESS = "0xcaF3ba73631773d4a45428AF6505f3BAEF44b945";
 const CONTRACT_ABI = [
   "event Ping(address indexed sender, uint256 indexed index, uint256 value)",
@@ -43,7 +43,7 @@ export default function App() {
 
     const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    // valeur par transaction
+    // Valeur par transaction
     let valueWei = 0n;
     try {
       if (valuePerTx && valuePerTx !== "0") valueWei = BigInt(parseEther(valuePerTx));
@@ -60,7 +60,7 @@ export default function App() {
 
         const receipt = await tx.wait(1);
 
-        // décodage event Ping
+        // Décodage event Ping
         let eventInfo = null;
         try {
           for (const log of receipt.logs) {
