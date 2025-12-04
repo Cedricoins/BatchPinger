@@ -1,0 +1,9 @@
+/* README rapide
+
+1) Déployez le contrat BatchPinger (Hardhat / forge / Remix). Après le déploiement notez l'adresse.
+2) Remplacez CONTRACT_ADDRESS dans App.jsx par l'adresse de déploiement.
+3) Installez dépendances front: npm install react react-dom ethers tailwindcss
+4) Lancez le front (par ex. Vite/CRA) et ouvrez la page. Connectez votre wallet Celo (Celo Extension Wallet ou MetaMask configuré pour Alfajores).
+5) Cliquez sur "Exécuter 15 transactions". Le front affichera les tx hashes et les events une fois confirmés.
+
+*/
