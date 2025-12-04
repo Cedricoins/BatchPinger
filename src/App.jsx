@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { JsonRpcProvider } from 'ethers';
-import { Contract } from 'ethers';
+import { JsonRpcProvider, Contract } from 'ethers';
 import { formatEther } from 'ethers/lib/utils.js';
 import { MaxUint256 } from 'ethers/lib/constants.js';
 
