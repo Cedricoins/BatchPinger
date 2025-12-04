@@ -1,12 +1,10 @@
-// React frontend (single-file App.jsx)
-// - Uses ethers.js to connect to the wallet (window.ethereum)
-// - Sends 15 separate transactions to contract.ping(i)
-// - Shows each tx hash and the event log when the tx is confirmed
-
 import React, { useState } from 'react';
-import { ethers } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
+import { Contract } from 'ethers';
+import { formatEther } from 'ethers/lib/utils.js';
+import { MaxUint256 } from 'ethers/lib/constants.js';
 
-// Replace with your deployed contract address after deployment
+// Replace with your deployed contract address
 const CONTRACT_ADDRESS = "0xcaF3ba73631773d4a45428AF6505f3BAEF44b945";
 const CONTRACT_ABI = [
   "event Ping(address indexed sender, uint256 indexed index, uint256 value)",
@@ -19,15 +17,16 @@ export default function App() {
   const [account, setAccount] = useState(null);
   const [logs, setLogs] = useState([]);
   const [running, setRunning] = useState(false);
-  const [valuePerTx, setValuePerTx] = useState('0'); // in CELO or cUSD depending network
+  const [valuePerTx, setValuePerTx] = useState('0'); // in CELO
 
   async function connectWallet() {
     if (!window.ethereum) {
       alert('Aucun wallet détecté. Installez Celo Extension Wallet ou MetaMask compatible.');
       return;
     }
-    const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-    await web3Provider.send('eth_requestAccounts', []);
+
+    const web3Provider = new JsonRpcProvider(window.ethereum);
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
     const signer = web3Provider.getSigner();
     const account = await signer.getAddress();
     setProvider(web3Provider);
@@ -37,24 +36,23 @@ export default function App() {
 
   async function execute15Transactions() {
     if (!signer) {
-      alert('Connectez d\u00E9abord votre wallet');
+      alert('Connectez d’abord votre wallet');
       return;
     }
     if (CONTRACT_ADDRESS.includes('<REMPLACEZ')) {
-      alert('Remplacez CONTRACT_ADDRESS par l\'adresse du contrat d\u00E9ploy\u00E9.');
+      alert('Remplacez CONTRACT_ADDRESS par l\'adresse du contrat déployé.');
       return;
     }
 
     setRunning(true);
     setLogs([]);
 
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    // parse value per tx (assume CELO, 18 decimals) - allow 0
-    let valueWei = ethers.constants.Zero;
+    let valueWei = BigInt(0);
     try {
       if (valuePerTx && valuePerTx !== '0') {
-        valueWei = ethers.utils.parseEther(valuePerTx);
+        valueWei = BigInt(Math.floor(parseFloat(valuePerTx) * 1e18));
       }
     } catch (e) {
       alert('Valeur invalide pour chaque tx');
@@ -62,25 +60,20 @@ export default function App() {
       return;
     }
 
-    // send 15 sequential transactions
     for (let i = 1; i <= 15; i++) {
       try {
-        // Send transaction
         const tx = await contract.ping(i, { value: valueWei });
-        // Push hash immediately
         setLogs(prev => [...prev, { index: i, stage: 'sent', txHash: tx.hash }]);
-
-        // Wait for confirmation (1 block)
         const receipt = await tx.wait(1);
 
-        // Try to decode event from receipt
+        // Decode Ping event
         let eventInfo = null;
         try {
-          const iface = new ethers.utils.Interface(CONTRACT_ABI);
+          const iface = new ethers.Interface(CONTRACT_ABI);
           for (const l of receipt.logs) {
             try {
               const parsed = iface.parseLog(l);
-              if (parsed && parsed.name === 'Ping') {
+              if (parsed.name === 'Ping') {
                 eventInfo = {
                   sender: parsed.args.sender,
                   index: parsed.args.index.toString(),
@@ -88,17 +81,16 @@ export default function App() {
                 };
                 break;
               }
-            } catch (e) { /* not our event */ }
+            } catch {}
           }
-        } catch (e) { /* ignore */ }
+        } catch {}
 
-        setLogs(prev => prev.map(entry => entry.txHash === tx.hash ? { ...entry, stage: 'confirmed', receipt, event: eventInfo } : entry));
+        setLogs(prev =>
+          prev.map(entry => entry.txHash === tx.hash ? { ...entry, stage: 'confirmed', receipt, event: eventInfo } : entry)
+        );
 
       } catch (err) {
-        console.error('Tx failed for index', i, err);
         setLogs(prev => [...prev, { index: i, stage: 'failed', error: (err && err.message) ? err.message : String(err) }]);
-
-        // Continue to the next transaction (do not block the loop permanently on failure)
       }
     }
 
@@ -111,7 +103,7 @@ export default function App() {
         <h1 className="text-2xl font-bold mb-4">Batch Sender Celo — 15 transactions</h1>
 
         <div className="mb-4">
-          <p className="text-sm text-gray-600">Etat wallet: {account ? account : 'non connecté'}</p>
+          <p className="text-sm text-gray-600">Etat wallet: {account || 'non connecté'}</p>
           <div className="mt-2 flex gap-2">
             <button className="px-4 py-2 rounded-lg border" onClick={connectWallet}>Connecter le wallet</button>
             <button className="px-4 py-2 rounded-lg bg-blue-600 text-white" onClick={execute15Transactions} disabled={running || !account}>Exécuter 15 transactions</button>
@@ -155,14 +147,6 @@ export default function App() {
           </div>
         </div>
 
-        <div className="mt-6 text-xs text-gray-500">
-          <p>Notes:</p>
-          <ul className="list-disc ml-5">
-            <li>Vous devez déployer <code>BatchPinger</code> (contrat Solidity fourni) et remplacer <code>CONTRACT_ADDRESS</code> par l'adresse déployée.</li>
-            <li>Ce front envoie 15 transactions séparées (une par appel à <code>ping(index)</code>), et attend 1 confirmation pour chaque tx avant d'envoyer la suivante.</li>
-            <li>Sur les réseaux publics, envoyez des transactions avec prudence — assurez-vous d'avoir assez de CELO (ou la monnaie du réseau) pour payer le gas.</li>
-          </ul>
-        </div>
       </div>
     </div>
   );
