@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { ethers } from 'ethers';
 
 // Replace with your deployed contract address after deployment
-const CONTRACT_ADDRESS = "<REMPLACEZ_PAR_VOTRE_ADRESSE_DE_CONTRACT>";
+const CONTRACT_ADDRESS = "0xcaF3ba73631773d4a45428AF6505f3BAEF44b945";
 const CONTRACT_ABI = [
   "event Ping(address indexed sender, uint256 indexed index, uint256 value)",
   "function ping(uint256 index) external payable"
